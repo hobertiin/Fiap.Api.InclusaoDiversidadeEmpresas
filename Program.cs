@@ -1,58 +1,50 @@
 using AutoMapper;
-using Fiap.Api.InclusaoDiversidadeEmpresas.Repository;
+using Fiap.Api.InclusaoDiversidadeEmpresas.Services;
 using InclusaoDiversidadeEmpresas.Data;
+using InclusaoDiversidadeEmpresas.Services;
 using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-#region Repositorios
-builder.Services.AddScoped<ITreinamentoRepository, TreinamentoRepository>();
-builder.Services.AddScoped<IParticipacaoEmTreinamentoRepository, ParticipacaoEmTreinamentoRepository>();
-#endregion
-
 #region Services
-//builder.Services.AddScoped<IClienteService, ClienteService>();
+builder.Services.AddScoped<IColaboradorService, ColaboradorService>();
+builder.Services.AddScoped<IParticipacaoEmTreinamentoService, ParticipacaoEmTreinamentoService>();
+builder.Services.AddScoped<IRelatorioService, RelatorioService>();
+builder.Services.AddScoped<ITreinamentoService, TreinamentoService>();
 #endregion
-
 
 #region Configuracao do banco de dados
 var connectionString = builder.Configuration.GetConnectionString("DatabaseConnection");
+
 builder.Services.AddDbContext<DatabaseContext>(opt =>
-    opt.UseOracle(connectionString).EnableSensitiveDataLogging(true)
-    );
+    opt.UseOracle(connectionString)
+       .EnableSensitiveDataLogging(true)
+);
 #endregion
 
 #region AutoMapper
 
-// Configuração do AutoMapper
-var mapperConfig = new AutoMapper.MapperConfiguration(c => {
-    // Permite que coleções nulas sejam mapeadas
+var mapperConfig = new MapperConfiguration(c =>
+{
     c.AllowNullCollections = true;
-    // Permite que valores de destino nulos sejam mapeados
     c.AllowNullDestinationValues = true;
 
-    // Mapeamentos entre ViewModels e Models
-
+    // Adicione seus profiles aqui:
+    // c.AddProfile<SeuProfile>();
 });
 
-// Cria o mapper com base na configuração definida
 IMapper mapper = mapperConfig.CreateMapper();
-
-// Registra o IMapper como um serviço singleton no container de DI do ASP.NET Core
 builder.Services.AddSingleton(mapper);
 
 #endregion
 
-
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

@@ -1,38 +1,71 @@
-﻿using Fiap.Api.InclusaoDiversidadeEmpresas.Repository;
+﻿using InclusaoDiversidadeEmpresas.Data;
 using InclusaoDiversidadeEmpresas.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Fiap.Api.InclusaoDiversidadeEmpresas.Services
 {
     public class ParticipacaoEmTreinamentoService : IParticipacaoEmTreinamentoService
     {
-        private readonly IParticipacaoEmTreinamentoRepository _participacaoEmTreinamentoRepository;
-        public ParticipacaoEmTreinamentoService(IParticipacaoEmTreinamentoRepository participacaoEmTreinamentoRepository)
+        private readonly DatabaseContext _databaseContext;
+
+        public ParticipacaoEmTreinamentoService(DatabaseContext databaseContext)
         {
-            _participacaoEmTreinamentoRepository = participacaoEmTreinamentoRepository;
-        }
-        public void AtualizarCliente(ParticipacaoEmTreinamentoModel participacaoEmTreinamentoModel)
-        {
-            _participacaoEmTreinamentoRepository.Update(participacaoEmTreinamentoModel);
+            _databaseContext = databaseContext;
         }
 
-        public void CriarCliente(ParticipacaoEmTreinamentoModel participacaoEmTreinamentoModel)
+        public async Task<ParticipacaoEmTreinamentoModel?> AtualizarParticipacaoEmTreinamentoService(ParticipacaoEmTreinamentoModel participacaoEmTreinamento)
         {
-            _participacaoEmTreinamentoRepository.Add(participacaoEmTreinamentoModel);
+            _databaseContext.ParticipacoesEmTreinamento.Update(participacaoEmTreinamento);
+
+            try
+            {
+                await _databaseContext.SaveChangesAsync();
+                return participacaoEmTreinamento;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await _databaseContext.ParticipacoesEmTreinamento.AnyAsync(e => e.Id == participacaoEmTreinamento.Id))
+                {
+                    return null;
+                }
+                throw;
+            }
         }
 
-        public void DeletarCliente(int id)
+        public async Task<ParticipacaoEmTreinamentoModel> CriarParticipacaoEmTreinamentoService(ParticipacaoEmTreinamentoModel participacaoEmTreinamento)
         {
-            _participacaoEmTreinamentoRepository.Delete(_participacaoEmTreinamentoRepository.GetById(id));
+            _databaseContext.ParticipacoesEmTreinamento.Add(participacaoEmTreinamento);
+            await _databaseContext.SaveChangesAsync();
+            return participacaoEmTreinamento;
         }
 
-        public IEnumerable<ParticipacaoEmTreinamentoModel> ListarClientes()
+        public async Task<bool> DeletarParticipacaoEmTreinamentoService(int id)
         {
-            return _participacaoEmTreinamentoRepository.GetAll();
+            var participacaoEmTreinamento = await _databaseContext.ParticipacoesEmTreinamento.FindAsync(id);
+            if (participacaoEmTreinamento == null)
+            {
+                return false;
+            }
+
+            _databaseContext.ParticipacoesEmTreinamento.Remove(participacaoEmTreinamento);
+            await _databaseContext.SaveChangesAsync();
+            return true;
         }
 
-        public ParticipacaoEmTreinamentoModel ObterClientePorId(int id)
+        public async  Task<IEnumerable<ParticipacaoEmTreinamentoModel>> ListarParticipacaoEmTreinamentoService()
         {
-            return _participacaoEmTreinamentoRepository.GetById(id);
+            return await _databaseContext.ParticipacoesEmTreinamento
+                .Include(p => p.Colaborador)
+                .Include(p => p.Treinamento)
+                .ToListAsync();
+        }
+
+        public async Task<ParticipacaoEmTreinamentoModel?> ObterParticipacaoEmTreinamentoServicePorId(int id)
+        {
+            return await _databaseContext.ParticipacoesEmTreinamento
+                .Include(p => p.Colaborador)
+                .Include(p => p.Treinamento)
+                .FirstOrDefaultAsync(t => t.Id == id);
         }
     }
 }

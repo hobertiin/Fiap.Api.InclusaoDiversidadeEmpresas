@@ -4,10 +4,10 @@ namespace Fiap.Api.InclusaoDiversidadeEmpresas.Services
 {
     public interface IParticipacaoEmTreinamentoService
     {
-        IEnumerable<ParticipacaoEmTreinamentoModel> ListarClientes();
-        ParticipacaoEmTreinamentoModel ObterClientePorId(int id);
-        void CriarCliente(ParticipacaoEmTreinamentoModel participacaoEmTreinamentoModel);
-        void AtualizarCliente(ParticipacaoEmTreinamentoModel participacaoEmTreinamentoModel);
-        void DeletarCliente(int id);
+        Task<IEnumerable<ParticipacaoEmTreinamentoModel>> ListarParticipacaoEmTreinamentoService();
+        Task<ParticipacaoEmTreinamentoModel?> ObterParticipacaoEmTreinamentoServicePorId(int id);
+        Task<ParticipacaoEmTreinamentoModel> CriarParticipacaoEmTreinamentoService(ParticipacaoEmTreinamentoModel participacaoEmTreinamento);
+        Task<ParticipacaoEmTreinamentoModel?> AtualizarParticipacaoEmTreinamentoService(ParticipacaoEmTreinamentoModel participacaoEmTreinamento);
+        Task<bool> DeletarParticipacaoEmTreinamentoService(int id);
     }
 }

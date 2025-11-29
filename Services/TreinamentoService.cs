@@ -1,38 +1,67 @@
-﻿using Fiap.Api.InclusaoDiversidadeEmpresas.Repository;
+﻿using InclusaoDiversidadeEmpresas.Data;
 using InclusaoDiversidadeEmpresas.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Fiap.Api.InclusaoDiversidadeEmpresas.Services
 {
     public class TreinamentoService : ITreinamentoService
     {
-        private readonly ITreinamentoRepository _treinamentoRepository;
-        public TreinamentoService(ITreinamentoRepository treinamentoRepository)
+        private readonly DatabaseContext _databaseContext;
+        public TreinamentoService(DatabaseContext databaseContext)
         {
-            _treinamentoRepository = treinamentoRepository;
+            _databaseContext = databaseContext;
         }
-        public void AtualizarCliente(TreinamentoModel treinamento)
+        public async Task<TreinamentoModel?> AtualizarTreinamento(TreinamentoModel treinamento)
         {
-            _treinamentoRepository.Update(treinamento);
+            _databaseContext.Entry(treinamento).State = EntityState.Modified;
+
+            try
+            {
+                await _databaseContext.SaveChangesAsync();
+                return treinamento;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await _databaseContext.Treinamentos.AnyAsync(e => e.Id == treinamento.Id))
+                {
+                    return null; 
+                }
+                throw;
+            }
         }
 
-        public void CriarCliente(TreinamentoModel treinamento)
+        public async Task<TreinamentoModel> CriarTreinamento(TreinamentoModel treinamento)
         {
-            _treinamentoRepository.Add(treinamento);
+            _databaseContext.Treinamentos.Add(treinamento);
+            await _databaseContext.SaveChangesAsync();
+            return treinamento;
         }
 
-        public void DeletarCliente(int id)
+        public async Task<bool> DeletarTreinamento(int id)
         {
-            _treinamentoRepository.Delete(_treinamentoRepository.GetById(id));
+            var treinamento = await _databaseContext.Treinamentos.FindAsync(id);
+            if (treinamento == null)
+            {
+                return false;
+            }
+
+            _databaseContext.Treinamentos.Remove(treinamento);
+            await _databaseContext.SaveChangesAsync();
+            return true;
+
         }
 
-        public IEnumerable<TreinamentoModel> ListarClientes()
+        public async Task<IEnumerable<TreinamentoModel>> ListarTreinamentos()
         {
-            return _treinamentoRepository.GetAll();
+           return await _databaseContext.Treinamentos.Include(t => t.Participacao).ToListAsync();
+         
         }
 
-        public TreinamentoModel ObterClientePorId(int id)
+        public async Task<TreinamentoModel?> ObterTreinamentoPorId(int id)
         {
-            return _treinamentoRepository.GetById(id);
+            return await _databaseContext.Treinamentos
+                .Include(t => t.Participacao)
+                .FirstOrDefaultAsync(t => t.Id == id);
         }
     }
 }
