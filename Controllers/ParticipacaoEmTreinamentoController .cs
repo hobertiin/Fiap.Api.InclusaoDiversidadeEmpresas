@@ -72,5 +72,8 @@ namespace Fiap.Api.InclusaoDiversidadeEmpresas.Controllers
 
             return NoContent();
         }
+
     }
+
+
 }
